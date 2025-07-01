@@ -51,7 +51,12 @@ for line in lines:
         type = str("MW")
     else:
         type = str("ML")
-    location = " ".join(parts[8:10])
+    i = 8
+    location_parts = []
+    while i < len(parts) and (parts[i] != "İlksel" and parts[i] != "REVIZE01"): # Collect all location parts until we reach the status marker ("İlksel" or "REVIZE01")
+        location_parts.append(parts[i])
+        i += 1
+    location = " ".join(location_parts)
     data.append([date, time_str, latitude, longitude, depth, magnitude, type, location])
 
 df = pd.DataFrame(data, columns=["Date", "Time", "Latitude(N)", "Longitude(E)", "Depth(km)", "Magnitude", "Type", "Location"]) 
@@ -87,10 +92,16 @@ def refresh_():
         else:
             magnitude = float(parts[6])
             typ = "ML"
-        location = " ".join(parts[8:10])
+        i = 8
+        location_parts = []
+        while i < len(parts) and (parts[i] != "İlksel" and parts[i] != "REVIZE01"):
+            location_parts.append(parts[i])
+            i += 1
+        location = " ".join(location_parts)
         data.append([date, time_str, latitude, longitude, depth, magnitude, typ, location])
 
     df = pd.DataFrame(data, columns=["Date", "Time", "Latitude(N)", "Longitude(E)", "Depth(km)", "Magnitude", "Type", "Location"])
+    time.sleep(1)
     messagebox.showinfo("Info", "Data refreshed!")
 
 def show_latest():
@@ -101,6 +112,13 @@ def show_biggest():
     quake = df.loc[df["Magnitude"].idxmax()]
     messagebox.showinfo("Biggest Quake", quake.to_string())
 
+def show_all():
+    window = tk.Toplevel(root)
+    window.title("First 50 Quakes")
+
+    text_widget = tk.Text(window, wrap="none", width=150)
+    text_widget.insert(tk.END, df.to_string(index=True))
+    text_widget.pack(expand=True, fill="both")
 def save_to_csv():
     df.to_csv("latest_earthquakes.csv", index=False)
     messagebox.showinfo("Save CSV", "Data saved to latest_earthquakes.csv")
@@ -108,11 +126,14 @@ def save_to_csv():
 
 root = tk.Tk()
 root.title("Kandilli Earthquake Viewer")
-label = tk.Label(root, text="Welcome! You can check the latest and biggest earthquakes.")
+label = tk.Label(root, text="Welcome! You can check the latest 500 earthquakes.")
 label.pack(padx=10, pady=10)
 
 refresh = tk.Button(root, text="Refresh Data", command=refresh_)
 refresh.pack(padx=10, pady=10)
+
+all = tk.Button(root, text="Show All", command=show_all)
+all.pack(padx=10, pady=10)
 
 latest = tk.Button(root, text="Show Latest Quake", command=show_latest)
 latest.pack(padx=10, pady=10)
