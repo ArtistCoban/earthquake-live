@@ -1,12 +1,13 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-import json
-from urllib.request import Request,urlopen
 import tkinter as tk
 from tkinter import messagebox
 import re
 import time
+import folium
+import webbrowser
+import os
 
 headers = {"User-Agent":"Mozilla/5.0"}
 
@@ -114,7 +115,7 @@ def show_biggest():
 
 def show_all():
     window = tk.Toplevel(root)
-    window.title("First 50 Quakes")
+    window.title("Last 500 Quakes")
 
     text_widget = tk.Text(window, wrap="none", width=150)
     text_widget.insert(tk.END, df.to_string(index=True))
@@ -123,6 +124,28 @@ def save_to_csv():
     df.to_csv("latest_earthquakes.csv", index=False)
     messagebox.showinfo("Save CSV", "Data saved to latest_earthquakes.csv")
 
+def open_map():
+    map_center = [38.0, 35.0]
+    m = folium.Map(location=map_center, zoom_start=5)
+
+    for idx, row in df.iterrows():
+        folium.CircleMarker(
+            location=[row["Latitude(N)"], row["Longitude(E)"]],
+            radius=row["Magnitude"] * 2,
+            popup=f"""
+            Location: {row['Location']}<br>
+            Magnitude: {row['Magnitude']}<br>
+            Depth: {row['Depth(km)']} km
+            """,
+            color="navy",
+            fill=True,
+            fill_color="darkblue"
+        ).add_to(m)
+
+    filepath = os.path.abspath("earthquake_map.html")
+    m.save(filepath)
+    webbrowser.open(f"file://{filepath}")
+    messagebox.showinfo("Map", "Map saved and opened in your browser.")
 
 root = tk.Tk()
 root.title("Kandilli Earthquake Viewer")
@@ -143,6 +166,9 @@ biggest.pack(padx=10, pady=10)
 
 save = tk.Button(root, text="Save CSV", command=save_to_csv)
 save.pack(padx=10, pady=10)
+
+map_button = tk.Button(root, text="Show Map", command=open_map)
+map_button.pack(padx=10, pady=10)
 
 exit = tk.Button(root, text="Exit", command=root.quit)
 exit.pack(padx=10, pady=10)

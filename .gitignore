@@ -1,1 +1,10 @@
-"venv*/" 
+# PyInstaller build files
+/dist/
+/build/
+*.spec
+
+# Python cache
+__pycache__/
+*.pyc
+.vscode/
+.idea/
