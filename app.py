@@ -13,7 +13,13 @@ headers = {"User-Agent":"Mozilla/5.0"}
 
 url = "http://www.koeri.boun.edu.tr/scripts/lst9.asp" #COPYRIGHT Boğaziçi Üniversitesi Kandilli Rasathanesi ve Deprem Araştırma Enstitüsü Bölgesel Deprem-Tsunami İzleme Ve Değerlendirme Merkezi 
 
-response = requests.get(url,headers=headers)
+try:
+    response = requests.get(url, headers=headers, timeout=10)
+    response.raise_for_status()
+except Exception as e:
+    messagebox.showerror("Error", f"Couldn't get data from Kandilli:\n{e}")
+    exit()
+    
 soup = BeautifulSoup(response.content, "html.parser")
 
 pre = soup.find("pre") # All data is found inside the <pre> element on the page.
@@ -121,8 +127,11 @@ def show_all():
     text_widget.insert(tk.END, df.to_string(index=True))
     text_widget.pack(expand=True, fill="both")
 def save_to_csv():
-    df.to_csv("latest_earthquakes.csv", index=False)
-    messagebox.showinfo("Save CSV", "Data saved to latest_earthquakes.csv")
+    filepath = "latest_earthquakes.csv"
+    df.to_csv(filepath, index=False)
+    webbrowser.open(f"file://{os.path.abspath(filepath)}")
+    messagebox.showinfo("Saved", f"CSV saved and opened:\n{filepath}")
+    
 
 def open_map():
     map_center = [38.0, 35.0]
@@ -133,9 +142,11 @@ def open_map():
             location=[row["Latitude(N)"], row["Longitude(E)"]],
             radius=row["Magnitude"] * 2,
             popup=f"""
-            Location: {row['Location']}<br>
-            Magnitude: {row['Magnitude']}<br>
-            Depth: {row['Depth(km)']} km
+            <b>Location:</b> {row['Location']}<br>
+            <b>Magnitude:</b> {row['Magnitude']}<br>
+            <b>Depth:</b> {row['Depth(km)']} km <br>
+            <b>Type:</b> {row['Type']}<br>
+            <b>Date:</b> {row['Date']} {row['Time']}<br>
             """,
             color="navy",
             fill=True,
@@ -174,3 +185,4 @@ exit = tk.Button(root, text="Exit", command=root.quit)
 exit.pack(padx=10, pady=10)
 
 root.mainloop()
+
